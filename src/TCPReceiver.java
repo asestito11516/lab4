@@ -159,7 +159,7 @@ public class TCPReceiver {
 
                             }
 
-                            if (!(finalAck.A() && !finalAck.S() && finalAck.getAcknowledgement() == pkt.getByteSequenceNumber() + 1)) {
+                            if (!(finalAck.A() && !finalAck.S() && finalAck.getAcknowledgement() == ackFin.getByteSequenceNumber() + 1)) {
 
                                 finalAck = null;
 
