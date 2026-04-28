@@ -4,11 +4,15 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TCPSender {
+    private final Map<Integer, PacketMetric> metricsByOffset = new HashMap<>();
+    private int lastFastRetransmitAck = -1;
     private final int port;
     private final String remoteIp;
     private final int remotePort;
@@ -18,8 +22,8 @@ public class TCPSender {
     private final DatagramSocket socket;
     private final long startTime;
     private final int windowSize;
-    private AtomicInteger windowStartOffset = new AtomicInteger(0);
-    private AtomicInteger windowEndOffset = new AtomicInteger(0);
+    private final AtomicInteger windowStartOffset = new AtomicInteger(0);
+    private final AtomicInteger windowEndOffset = new AtomicInteger(0);
     private final InetAddress remoteAddress;
     private final long INITIAL_TIMEOUT = 5_000_000_000L;
     private static final double ALPHA = 0.875;
@@ -38,11 +42,13 @@ public class TCPSender {
     private final AtomicInteger totalPacketsDiscarded = new AtomicInteger(0);
     private final AtomicInteger totalPacketsRetransmitted = new AtomicInteger(0);
     private final AtomicBoolean shouldRunAckThread = new AtomicBoolean(true);
-
+    private volatile int baseIndex = 0;
+    private volatile int nextSendIndex = 0;
 
     public static class PacketMetric {
         private final int currentOffset;
         private final byte[] data;
+        private final int endOffset;
         private volatile boolean acknowledged;
         private int retransmittedCnt;
         private volatile long lastSentTime;
@@ -51,6 +57,7 @@ public class TCPSender {
         public PacketMetric(int currentOffset, byte[] data, boolean acknowledged, int retransmittedCnt, long lastSentTime, long timestamp) {
             this.currentOffset = currentOffset;
             this.data = data;
+            this.endOffset = currentOffset + data.length;
             this.acknowledged = acknowledged;
             this.retransmittedCnt = retransmittedCnt;
             this.lastSentTime = lastSentTime;
@@ -63,6 +70,10 @@ public class TCPSender {
 
         public byte[] getData() {
             return data;
+        }
+
+        public int getEndOffset() {
+            return endOffset;
         }
 
         public boolean isAcknowledged() {
@@ -111,7 +122,6 @@ public class TCPSender {
         windowSize = mtu * sws;
         remoteAddress = InetAddress.getByName(remoteIp);
         windowEndOffset.set(windowSize);
-
     }
 
     private Packet receiveWithRetries(int maxRetries) throws IOException {
@@ -119,7 +129,6 @@ public class TCPSender {
 
         for (int i = 0; i < maxRetries; i++) {
             try {
-
                 DatagramPacket udpPacket = new DatagramPacket(buf, buf.length);
                 socket.receive(udpPacket);
                 byte[] received = Arrays.copyOf(udpPacket.getData(), udpPacket.getLength());
@@ -128,13 +137,12 @@ public class TCPSender {
                     continue;
                 }
                 return Packet.parseByteArray(received);
-
             } catch (SocketTimeoutException e) {
                 continue;
             }
         }
-        throw new IOException("Timed out while receiving packet");
 
+        throw new IOException("Timed out while receiving packet");
     }
 
     private void printStats(int totalBytesTransferred) {
@@ -167,51 +175,48 @@ public class TCPSender {
         }
     }
 
-    private void fastRetransmitPackets(List<PacketMetric> packetMetrics, int ack) throws IOException {
-        for (PacketMetric metric : packetMetrics) {
-            if (metric.getCurrentOffset() == ack && !metric.isAcknowledged()) {
+    private void fastRetransmitPackets(Map<Integer, PacketMetric> metricsByOffset, int ack) throws IOException {
+        PacketMetric metric = metricsByOffset.get(ack);
 
-                metric.setRetransmittedCnt(metric.getRetransmittedCnt() + 1);
-
-                if (metric.getRetransmittedCnt() > MAX_RETRANSMISSIONS) {
-                    senderFailed = true;
-                    throw new IOException("Maximum number of retransmissions exceeded at offset " + metric.getCurrentOffset());
-                }
-
-                sendPacket(metric);
-                totalPacketsRetransmitted.incrementAndGet();
-
-                return;
-            }
+        if (metric == null || metric.isAcknowledged()) {
+            return;
         }
+
+        metric.setRetransmittedCnt(metric.getRetransmittedCnt() + 1);
+
+        if (metric.getRetransmittedCnt() > MAX_RETRANSMISSIONS) {
+            senderFailed = true;
+            throw new IOException("Maximum number of retransmissions exceeded at offset " + metric.getCurrentOffset());
+        }
+
+        sendPacket(metric);
+        totalPacketsRetransmitted.incrementAndGet();
     }
 
-
     private void retransmitTimedoutPackets(List<PacketMetric> packetMetrics) throws IOException {
+        if (baseIndex >= packetMetrics.size()) {
+            return;
+        }
+
+        PacketMetric oldestOutstanding = packetMetrics.get(baseIndex);
+
+        if (oldestOutstanding.isAcknowledged() || oldestOutstanding.getLastSentTime() == -1) {
+            return;
+        }
+
         long now = System.nanoTime();
-        //goal: find timed out packets and retransmit them
-        for (PacketMetric metric : packetMetrics) {
-            if (metric.isAcknowledged() || metric.getLastSentTime() == -1) {
-                continue;
+
+        if (now - oldestOutstanding.getLastSentTime() >= timeout) {
+            oldestOutstanding.setRetransmittedCnt(oldestOutstanding.getRetransmittedCnt() + 1);
+
+            if (oldestOutstanding.getRetransmittedCnt() > MAX_RETRANSMISSIONS) {
+                senderFailed = true;
+                throw new IOException("Maximum number of retransmissions exceeded at offset " +
+                        oldestOutstanding.getCurrentOffset());
             }
 
-            int packetStart = metric.getCurrentOffset();
-            int packetEnd = packetStart + metric.getData().length;
-
-            if (packetEnd <= windowStartOffset.get() || packetStart >= windowEndOffset.get()) {
-                continue;
-            }
-
-            if (now - metric.getLastSentTime() >= timeout) {
-                metric.setRetransmittedCnt(metric.getRetransmittedCnt() + 1);
-                if (metric.getRetransmittedCnt() > MAX_RETRANSMISSIONS) {
-                    senderFailed = true;
-                    throw new IOException("Maximum number of retransmissions exceeded at offset " + metric.getCurrentOffset());
-                }
-                sendPacket(metric);
-                totalPacketsRetransmitted.incrementAndGet();
-
-            }
+            sendPacket(oldestOutstanding);
+            totalPacketsRetransmitted.incrementAndGet();
         }
     }
 
@@ -236,6 +241,7 @@ public class TCPSender {
                 remoteAddress,
                 remotePort
         );
+
         socket.send(udpPacket);
         log(packet);
         metric.setLastSentTime(now);
@@ -265,7 +271,9 @@ public class TCPSender {
 
             socket.send(synUdp);
             totalPacketsSent.incrementAndGet();
-            if (i > 0) totalPacketsRetransmitted.incrementAndGet();
+            if (i > 0) {
+                totalPacketsRetransmitted.incrementAndGet();
+            }
             log(synPacket);
 
             try {
@@ -297,9 +305,7 @@ public class TCPSender {
                 totalPacketsSent.incrementAndGet();
                 log(finalAckPacket);
                 return;
-
             } catch (IOException e) {
-                //just retry i guess
             }
         }
 
@@ -328,7 +334,9 @@ public class TCPSender {
 
             socket.send(finUdp);
             totalPacketsSent.incrementAndGet();
-            if (i > 0) totalPacketsRetransmitted.incrementAndGet();
+            if (i > 0) {
+                totalPacketsRetransmitted.incrementAndGet();
+            }
             log(finPacket);
 
             try {
@@ -360,9 +368,7 @@ public class TCPSender {
                 totalPacketsSent.incrementAndGet();
                 log(finalAckPacket);
                 return;
-
             } catch (IOException e) {
-                //keep retrying again
             }
         }
 
@@ -383,15 +389,20 @@ public class TCPSender {
             while (offset < data.length) {
                 int chunkSize = Math.min(mtu, data.length - offset);
                 byte[] chunkData = Arrays.copyOfRange(data, offset, offset + chunkSize);
+
                 //add one because the SYN packet consumes 1 offset (or sequence number)
-                packetMetrics.add(new PacketMetric(offset + 1, chunkData, false, 0, -1, -1));
+                PacketMetric pm = new PacketMetric(offset + 1, chunkData, false, 0, -1, -1);
+                packetMetrics.add(pm);
+                metricsByOffset.put(pm.getCurrentOffset(), pm);
                 offset += chunkSize;
             }
 
-            int currentOffset = 1;
+            baseIndex = 0;
+            nextSendIndex = 0;
 
             Thread ackProcessorThread = new Thread(() -> {
                 byte[] buf = new byte[2048];
+
                 while (shouldRunAckThread.get()) {
                     try {
                         DatagramPacket udpPacket = new DatagramPacket(buf, buf.length);
@@ -411,16 +422,22 @@ public class TCPSender {
                             if (ackPacket.getAcknowledgement() > windowStartOffset.get()) {
                                 windowStartOffset.set(ackPacket.getAcknowledgement());
                                 windowEndOffset.set(ackPacket.getAcknowledgement() + windowSize);
-                                //acknowledge packets
-                                for (PacketMetric metric : packetMetrics) {
-                                    metric.setAcknowledged(metric.getCurrentOffset() + metric.getData().length <= ackPacket.getAcknowledgement());
+
+                                while (baseIndex < packetMetrics.size()) {
+                                    PacketMetric metric = packetMetrics.get(baseIndex);
+                                    if (metric.getEndOffset() <= ackPacket.getAcknowledgement()) {
+                                        metric.setAcknowledged(true);
+                                        baseIndex++;
+                                    } else {
+                                        break;
+                                    }
                                 }
 
                                 //update the timeout
                                 updateTimeout(ackPacket.getAcknowledgement(), ackPacket.getTimestamp());
                                 lastAck = ackPacket.getAcknowledgement();
                                 duplicateAckCnt = 0;
-
+                                lastFastRetransmitAck = -1;
                             } else if (ackPacket.getAcknowledgement() == windowStartOffset.get()) {
                                 totalDuplicateAcks.incrementAndGet();
 
@@ -431,9 +448,9 @@ public class TCPSender {
                                     duplicateAckCnt = 1;
                                 }
 
-                                if (duplicateAckCnt >= 3) {
-                                    fastRetransmitPackets(packetMetrics, ackPacket.getAcknowledgement());
-                                    duplicateAckCnt = 0;
+                                if (duplicateAckCnt >= 3 && ackPacket.getAcknowledgement() != lastFastRetransmitAck) {
+                                    fastRetransmitPackets(metricsByOffset, ackPacket.getAcknowledgement());
+                                    lastFastRetransmitAck = ackPacket.getAcknowledgement();
                                 }
                             }
                         }
@@ -442,49 +459,49 @@ public class TCPSender {
                     } catch (IOException e) {
                         break;
                     }
-
                 }
             });
 
             ackProcessorThread.start();
 
-            while (!senderFailed && (windowStartOffset.get() < data.length + 1
-                    || currentOffset < data.length + 1)) {
+            while (!senderFailed && (baseIndex < packetMetrics.size() || nextSendIndex < packetMetrics.size())) {
                 // keep sending packets while inside the window..
-                while (currentOffset < windowEndOffset.get()) {
-                    int ind = currentOffset / mtu;
-                    if (ind >= packetMetrics.size()) {
+                while (nextSendIndex < packetMetrics.size()) {
+                    PacketMetric metric = packetMetrics.get(nextSendIndex);
+
+                    if (metric.getCurrentOffset() >= windowEndOffset.get()) {
                         break;
                     }
-                    TCPSender.PacketMetric metric = packetMetrics.get(ind);
 
                     // send packet if never seen before
                     if (!metric.isAcknowledged() && metric.getLastSentTime() == -1) {
                         sendPacket(metric);
-                        currentOffset += metric.getData().length;
-                    } else {
-                        break;
                     }
+
+                    nextSendIndex++;
                 }
 
                 //retransmit packets
                 retransmitTimedoutPackets(packetMetrics);
+
                 //keep waiting for acknowledgement otherwise
                 Thread.sleep(1);
             }
 
             shouldRunAckThread.set(false);
             ackProcessorThread.join();
+
+            if (senderFailed) {
+                throw new IOException("Sender failed due to maximum number of retransmissions exceeded");
+            }
+
             doFinalTeardown(data.length + 1);
             printStats(data.length);
-
-
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
             socket.close();
         }
-
     }
 
     private void log(Packet packet) {
@@ -492,6 +509,7 @@ public class TCPSender {
         logBuilder.append("snd ");
         double timeSeconds = (System.nanoTime() - startTime) / Math.pow(10, 9);
         logBuilder.append(String.format("%.2f", timeSeconds)).append(" ");
+
         if (packet.S()) {
             logBuilder.append("S ");
         } else {
@@ -521,6 +539,5 @@ public class TCPSender {
         logBuilder.append(packet.getAcknowledgement());
 
         System.out.println(logBuilder);
-
     }
 }
