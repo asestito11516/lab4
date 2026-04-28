@@ -101,15 +101,15 @@ public class TCPReceiver {
                         continue;
                     }
 
-                    if (!(ack.A() && !ack.S() && !ack.F() && ack.getLength() == 0 && ack.getAcknowledgement() == 1)) {
-                        ack = null;
+                    if (ack.A() && !ack.S() && ack.getAcknowledgement() == 1) {
+                        totalPacketsReceived++;
+                        log(ack, "rcv");
+                        socket.setSoTimeout(0);
+                        return;
                     }
-                }
 
-                totalPacketsReceived++;
-                log(ack, "rcv");
-                socket.setSoTimeout(0);
-                return;
+                    ack = null;
+                }
 
             } catch (SocketTimeoutException e) {
                 sendPacket(synAck);
