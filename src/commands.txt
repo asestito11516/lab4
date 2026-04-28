@@ -1,11 +1,56 @@
-h2 sh -c 'cd /home/mininet/assign4/lab4/src && java TCPend -p 5002 -f /home/mininet/assign4/lab4/src/out/tA_empty.out -m 200 -c 1 > /home/mininet/assign4/lab4/src/testlogs/tA_empty.receiver.log 2>&1 &'
-
-py time.sleep(0.5)
-
-h1 sh -c 'cd /home/mininet/assign4/lab4/src && java TCPend -p 5001 -s 10.0.0.2 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/empty.txt -m 200 -c 1 > /home/mininet/assign4/lab4/src/testlogs/tA_empty.sender.log 2>&1'
-
-py time.sleep(1.0)
-
-h1 sha256sum /home/mininet/assign4/lab4/src/testfiles/empty.txt
-
-h2 sha256sum /home/mininet/assign4/lab4/src/out/tA_empty.out
+ source /home/mininet/assign4/lab4/run_mininet_tests.mn
+*** Unknown command: # run_mininet_tests.mn
+*** Unknown command: # Assumes:
+*** Unknown command: # - POX and VirtualNetwork.jar are already running
+*** Unknown command: # - compiled classes are in /home/mininet/assign4/lab4/src
+*** Unknown command: # - test files already exist in /home/mininet/assign4/lab4/src/testfiles
+*** Unknown command: # - current router drop rate is whatever you configured in VirtualNetwork.jar
+invalid syntax (<string>, line 1)
+invalid syntax (<string>, line 1)
+*** Unknown command: # Clean old logs / outputs / java processes on hosts
+*** Unknown command: # Verify files exist
+empty.txt  medium.bin     mtu_minus_1.bin  onebyte.txt
+large.bin  mtu_exact.bin  mtu_plus_1.bin
+empty.txt  medium.bin     mtu_minus_1.bin  onebyte.txt
+large.bin  mtu_exact.bin  mtu_plus_1.bin
+*** Unknown command: echo "=============================="
+*** Unknown command: echo "NO-LOSS / CURRENT-LOSS TESTS"
+*** Unknown command: echo "=============================="
+*** Unknown command: ########## TEST A: empty ##########
+*** Unknown command: echo "TEST A: empty file"
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /home/mininet/assign4/lab4/src/testfiles/empty.txt
+sha256sum: /home/mininet/assign4/lab4/src/out/tA_empty.out: No such file or directory
+*** Unknown command: ########## TEST B: 1 byte ##########
+*** Unknown command: echo "TEST B: one byte"
+ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb  /home/mininet/assign4/lab4/src/testfiles/onebyte.txt
+sha256sum: /home/mininet/assign4/lab4/src/out/tB_onebyte.out: No such file or directory
+*** Unknown command: ########## TEST C: MTU-1 ##########
+*** Unknown command: echo "TEST C: mtu-1"
+d9fe27f3d807a7c46467325f7189495e82b099ce2e14c5b16cc76697fa909f81  /home/mininet/assign4/lab4/src/testfiles/mtu_minus_1.bin
+sha256sum: /home/mininet/assign4/lab4/src/out/tC_mtu_minus_1.out: No such file or directory
+*** Unknown command: ########## TEST D: MTU ##########
+*** Unknown command: echo "TEST D: mtu exact"
+41edece42d63e8d9bf515a9ba6932e1c20cbc9f5a5d134645adb5db1b9737ea3  /home/mininet/assign4/lab4/src/testfiles/mtu_exact.bin
+sha256sum: /home/mininet/assign4/lab4/src/out/tD_mtu_exact.out: No such file or directory
+*** Unknown command: ########## TEST E: MTU+1 ##########
+*** Unknown command: echo "TEST E: mtu+1"
+bb0381c13e0817201355e7d700b7623f0e985287add78712a11407c9f754efc8  /home/mininet/assign4/lab4/src/testfiles/mtu_plus_1.bin
+sha256sum: /home/mininet/assign4/lab4/src/out/tE_mtu_plus_1.out: No such file or directory
+*** Unknown command: ########## TEST F: medium, small MTU ##########
+*** Unknown command: echo "TEST F: medium, mtu=200, sws=8"
+b62f87c11263241beeb5c01d15a22cf5dea6d1912d69f7605efb86c55d455169  /home/mininet/assign4/lab4/src/testfiles/medium.bin
+sha256sum: /home/mininet/assign4/lab4/src/out/tF_medium_smallmtu.out: No such file or directory
+*** Unknown command: ########## TEST G: large, sws=1 ##########
+*** Unknown command: echo "TEST G: large, sws=1"
+b0212bca0c04f66267816c87e5a6b6143a3a2f82369c7e8f63621e5ee916e88d  /home/mininet/assign4/lab4/src/testfiles/large.bin
+sha256sum: /home/mininet/assign4/lab4/src/out/tG_large_w1.out: No such file or directory
+*** Unknown command: ########## TEST H: large, sws=8 ##########
+*** Unknown command: echo "TEST H: large, sws=8"
+b0212bca0c04f66267816c87e5a6b6143a3a2f82369c7e8f63621e5ee916e88d  /home/mininet/assign4/lab4/src/testfiles/large.bin
+sha256sum: /home/mininet/assign4/lab4/src/out/tH_large_w8.out: No such file or directory
+*** Unknown command: echo "=============================="
+*** Unknown command: echo "DONE"
+*** Unknown command: echo "Check matching hashes above."
+*** Unknown command: echo "Logs: /home/mininet/assign4/lab4/src/testlogs"
+*** Unknown command: echo "Output: /home/mininet/assign4/lab4/src/out"
+*** Unknown command: echo "=============================="
