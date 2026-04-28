@@ -1,0 +1,44 @@
+h1 pkill -f "java.*TCPend" || true
+h2 pkill -f "java.*TCPend" || true
+h1 rm -f /home/mininet/assign4/lab4/src/out/*
+h2 rm -f /home/mininet/assign4/lab4/src/out/*
+h1 rm -f /home/mininet/assign4/lab4/src/testlogs/*
+h2 rm -f /home/mininet/assign4/lab4/src/testlogs/*
+
+sh echo "LOSS TEST 1: medium, mtu=1000, sws=4, drop=5%"
+h1 pkill -f "java.*TCPend" || true
+h2 pkill -f "java.*TCPend" || true
+sh sleep 1
+h2 sh -c 'cd /home/mininet/assign4/lab4/src && nohup java -cp . TCPend -p 5002 -f /home/mininet/assign4/lab4/src/out/loss5_medium.out -m 1000 -c 4 > /home/mininet/assign4/lab4/src/testlogs/loss5_medium.receiver.log 2>&1 < /dev/null &'
+sh sleep 1
+h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.2.102 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/medium.bin -m 1000 -c 4 > /home/mininet/assign4/lab4/src/testlogs/loss5_medium.sender.log 2>&1'
+sh sleep 5
+h1 sha256sum /home/mininet/assign4/lab4/src/testfiles/medium.bin
+h2 sha256sum /home/mininet/assign4/lab4/src/out/loss5_medium.out
+
+sh echo "LOSS TEST 2: large, mtu=1000, sws=8, drop=5%"
+h1 pkill -f "java.*TCPend" || true
+h2 pkill -f "java.*TCPend" || true
+sh sleep 1
+h2 sh -c 'cd /home/mininet/assign4/lab4/src && nohup java -cp . TCPend -p 5002 -f /home/mininet/assign4/lab4/src/out/loss5_large.out -m 1000 -c 8 > /home/mininet/assign4/lab4/src/testlogs/loss5_large.receiver.log 2>&1 < /dev/null &'
+sh sleep 1
+h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.2.102 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/large.bin -m 1000 -c 8 > /home/mininet/assign4/lab4/src/testlogs/loss5_large.sender.log 2>&1'
+sh sleep 15
+h1 sha256sum /home/mininet/assign4/lab4/src/testfiles/large.bin
+h2 sha256sum /home/mininet/assign4/lab4/src/out/loss5_large.out
+
+sh echo "LOSS TEST 3: medium, mtu=1000, sws=1, drop=5%"
+h1 pkill -f "java.*TCPend" || true
+h2 pkill -f "java.*TCPend" || true
+sh sleep 1
+h2 sh -c 'cd /home/mininet/assign4/lab4/src && nohup java -cp . TCPend -p 5002 -f /home/mininet/assign4/lab4/src/out/loss5_medium_w1.out -m 1000 -c 1 > /home/mininet/assign4/lab4/src/testlogs/loss5_medium_w1.receiver.log 2>&1 < /dev/null &'
+sh sleep 1
+h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.2.102 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/medium.bin -m 1000 -c 1 > /home/mininet/assign4/lab4/src/testlogs/loss5_medium_w1.sender.log 2>&1'
+sh sleep 10
+h1 sha256sum /home/mininet/assign4/lab4/src/testfiles/medium.bin
+h2 sha256sum /home/mininet/assign4/lab4/src/out/loss5_medium_w1.out
+
+sh echo "DONE 5% LOSS"
+sh echo "If any output file is missing:"
+sh echo "h1 tail -n 100 /home/mininet/assign4/lab4/src/testlogs/<name>.sender.log"
+sh echo "h2 tail -n 100 /home/mininet/assign4/lab4/src/testlogs/<name>.receiver.log"
