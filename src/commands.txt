@@ -1,0 +1,11 @@
+h2 sh -c 'cd /home/mininet/assign4/lab4/src && java TCPend -p 5002 -f /home/mininet/assign4/lab4/src/out/tA_empty.out -m 200 -c 1 > /home/mininet/assign4/lab4/src/testlogs/tA_empty.receiver.log 2>&1 &'
+
+py time.sleep(0.5)
+
+h1 sh -c 'cd /home/mininet/assign4/lab4/src && java TCPend -p 5001 -s 10.0.0.2 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/empty.txt -m 200 -c 1 > /home/mininet/assign4/lab4/src/testlogs/tA_empty.sender.log 2>&1'
+
+py time.sleep(1.0)
+
+h1 sha256sum /home/mininet/assign4/lab4/src/testfiles/empty.txt
+
+h2 sha256sum /home/mininet/assign4/lab4/src/out/tA_empty.out
