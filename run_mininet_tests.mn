@@ -11,7 +11,7 @@ h2 pkill -f "java.*TCPend" || true
 sh sleep 1
 h2 sh -c 'cd /home/mininet/assign4/lab4/src && nohup java -cp . TCPend -p 5002 -f /home/mininet/assign4/lab4/src/out/tA_empty.out -m 200 -c 1 > /home/mininet/assign4/lab4/src/testlogs/tA_empty.receiver.log 2>&1 < /dev/null &'
 sh sleep 1
-h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.0.2 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/empty.txt -m 200 -c 1 > /home/mininet/assign4/lab4/src/testlogs/tA_empty.sender.log 2>&1'
+h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.2.102 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/empty.txt -m 200 -c 1 > /home/mininet/assign4/lab4/src/testlogs/tA_empty.sender.log 2>&1'
 sh sleep 1
 h1 sha256sum /home/mininet/assign4/lab4/src/testfiles/empty.txt
 h2 sha256sum /home/mininet/assign4/lab4/src/out/tA_empty.out
@@ -22,7 +22,7 @@ h2 pkill -f "java.*TCPend" || true
 sh sleep 1
 h2 sh -c 'cd /home/mininet/assign4/lab4/src && nohup java -cp . TCPend -p 5002 -f /home/mininet/assign4/lab4/src/out/tB_onebyte.out -m 1000 -c 4 > /home/mininet/assign4/lab4/src/testlogs/tB_onebyte.receiver.log 2>&1 < /dev/null &'
 sh sleep 1
-h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.0.2 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/onebyte.txt -m 1000 -c 4 > /home/mininet/assign4/lab4/src/testlogs/tB_onebyte.sender.log 2>&1'
+h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.2.102 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/onebyte.txt -m 1000 -c 4 > /home/mininet/assign4/lab4/src/testlogs/tB_onebyte.sender.log 2>&1'
 sh sleep 1
 h1 sha256sum /home/mininet/assign4/lab4/src/testfiles/onebyte.txt
 h2 sha256sum /home/mininet/assign4/lab4/src/out/tB_onebyte.out
@@ -33,7 +33,7 @@ h2 pkill -f "java.*TCPend" || true
 sh sleep 1
 h2 sh -c 'cd /home/mininet/assign4/lab4/src && nohup java -cp . TCPend -p 5002 -f /home/mininet/assign4/lab4/src/out/tC_mtu_minus_1.out -m 1000 -c 4 > /home/mininet/assign4/lab4/src/testlogs/tC_mtu_minus_1.receiver.log 2>&1 < /dev/null &'
 sh sleep 1
-h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.0.2 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/mtu_minus_1.bin -m 1000 -c 4 > /home/mininet/assign4/lab4/src/testlogs/tC_mtu_minus_1.sender.log 2>&1'
+h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.2.102 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/mtu_minus_1.bin -m 1000 -c 4 > /home/mininet/assign4/lab4/src/testlogs/tC_mtu_minus_1.sender.log 2>&1'
 sh sleep 1
 h1 sha256sum /home/mininet/assign4/lab4/src/testfiles/mtu_minus_1.bin
 h2 sha256sum /home/mininet/assign4/lab4/src/out/tC_mtu_minus_1.out
@@ -44,7 +44,7 @@ h2 pkill -f "java.*TCPend" || true
 sh sleep 1
 h2 sh -c 'cd /home/mininet/assign4/lab4/src && nohup java -cp . TCPend -p 5002 -f /home/mininet/assign4/lab4/src/out/tD_mtu_exact.out -m 1000 -c 4 > /home/mininet/assign4/lab4/src/testlogs/tD_mtu_exact.receiver.log 2>&1 < /dev/null &'
 sh sleep 1
-h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.0.2 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/mtu_exact.bin -m 1000 -c 4 > /home/mininet/assign4/lab4/src/testlogs/tD_mtu_exact.sender.log 2>&1'
+h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.2.102 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/mtu_exact.bin -m 1000 -c 4 > /home/mininet/assign4/lab4/src/testlogs/tD_mtu_exact.sender.log 2>&1'
 sh sleep 1
 h1 sha256sum /home/mininet/assign4/lab4/src/testfiles/mtu_exact.bin
 h2 sha256sum /home/mininet/assign4/lab4/src/out/tD_mtu_exact.out
@@ -55,7 +55,7 @@ h2 pkill -f "java.*TCPend" || true
 sh sleep 1
 h2 sh -c 'cd /home/mininet/assign4/lab4/src && nohup java -cp . TCPend -p 5002 -f /home/mininet/assign4/lab4/src/out/tE_mtu_plus_1.out -m 1000 -c 4 > /home/mininet/assign4/lab4/src/testlogs/tE_mtu_plus_1.receiver.log 2>&1 < /dev/null &'
 sh sleep 1
-h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.0.2 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/mtu_plus_1.bin -m 1000 -c 4 > /home/mininet/assign4/lab4/src/testlogs/tE_mtu_plus_1.sender.log 2>&1'
+h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.2.102 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/mtu_plus_1.bin -m 1000 -c 4 > /home/mininet/assign4/lab4/src/testlogs/tE_mtu_plus_1.sender.log 2>&1'
 sh sleep 1
 h1 sha256sum /home/mininet/assign4/lab4/src/testfiles/mtu_plus_1.bin
 h2 sha256sum /home/mininet/assign4/lab4/src/out/tE_mtu_plus_1.out
@@ -66,7 +66,7 @@ h2 pkill -f "java.*TCPend" || true
 sh sleep 1
 h2 sh -c 'cd /home/mininet/assign4/lab4/src && nohup java -cp . TCPend -p 5002 -f /home/mininet/assign4/lab4/src/out/tF_medium_smallmtu.out -m 200 -c 8 > /home/mininet/assign4/lab4/src/testlogs/tF_medium_smallmtu.receiver.log 2>&1 < /dev/null &'
 sh sleep 1
-h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.0.2 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/medium.bin -m 200 -c 8 > /home/mininet/assign4/lab4/src/testlogs/tF_medium_smallmtu.sender.log 2>&1'
+h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.2.102 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/medium.bin -m 200 -c 8 > /home/mininet/assign4/lab4/src/testlogs/tF_medium_smallmtu.sender.log 2>&1'
 sh sleep 1
 h1 sha256sum /home/mininet/assign4/lab4/src/testfiles/medium.bin
 h2 sha256sum /home/mininet/assign4/lab4/src/out/tF_medium_smallmtu.out
@@ -77,7 +77,7 @@ h2 pkill -f "java.*TCPend" || true
 sh sleep 1
 h2 sh -c 'cd /home/mininet/assign4/lab4/src && nohup java -cp . TCPend -p 5002 -f /home/mininet/assign4/lab4/src/out/tG_large_w1.out -m 1000 -c 1 > /home/mininet/assign4/lab4/src/testlogs/tG_large_w1.receiver.log 2>&1 < /dev/null &'
 sh sleep 1
-h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.0.2 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/large.bin -m 1000 -c 1 > /home/mininet/assign4/lab4/src/testlogs/tG_large_w1.sender.log 2>&1'
+h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.2.102 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/large.bin -m 1000 -c 1 > /home/mininet/assign4/lab4/src/testlogs/tG_large_w1.sender.log 2>&1'
 sh sleep 1
 h1 sha256sum /home/mininet/assign4/lab4/src/testfiles/large.bin
 h2 sha256sum /home/mininet/assign4/lab4/src/out/tG_large_w1.out
@@ -88,7 +88,7 @@ h2 pkill -f "java.*TCPend" || true
 sh sleep 1
 h2 sh -c 'cd /home/mininet/assign4/lab4/src && nohup java -cp . TCPend -p 5002 -f /home/mininet/assign4/lab4/src/out/tH_large_w8.out -m 1400 -c 8 > /home/mininet/assign4/lab4/src/testlogs/tH_large_w8.receiver.log 2>&1 < /dev/null &'
 sh sleep 1
-h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.0.2 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/large.bin -m 1400 -c 8 > /home/mininet/assign4/lab4/src/testlogs/tH_large_w8.sender.log 2>&1'
+h1 sh -c 'cd /home/mininet/assign4/lab4/src && java -cp . TCPend -p 5001 -s 10.0.2.102 -a 5002 -f /home/mininet/assign4/lab4/src/testfiles/large.bin -m 1400 -c 8 > /home/mininet/assign4/lab4/src/testlogs/tH_large_w8.sender.log 2>&1'
 sh sleep 1
 h1 sha256sum /home/mininet/assign4/lab4/src/testfiles/large.bin
 h2 sha256sum /home/mininet/assign4/lab4/src/out/tH_large_w8.out
